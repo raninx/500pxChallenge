@@ -4,8 +4,9 @@ import java.util.ArrayList;
 
 public class Photo {
     public String current_page;
-    public ArrayList<Details> photos;
-    public class Details {
+    public ArrayList<Item> photos;
+    public class Item {
+        public String feature;
         public ArrayList<Url> images;
     }
     public class Url {

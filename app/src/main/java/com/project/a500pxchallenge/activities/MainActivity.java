@@ -12,6 +12,8 @@ import com.project.a500pxchallenge.adapters.CustomAdapter;
 import com.project.a500pxchallenge.model.Photo;
 import com.project.a500pxchallenge.network.RetrofitClientInstance;
 import com.project.a500pxchallenge.network.services.GetPhotosService;
+
+import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -42,7 +44,15 @@ public class MainActivity extends AppCompatActivity {
 
                     Toast.makeText(getBaseContext(),"success",Toast.LENGTH_LONG).show();
 
-//                    generateDataList(response.body());
+                    ArrayList<Photo.Item> list= response.body().photos;
+                    ArrayList<Photo.Item> newlist= new ArrayList<>();
+                    for (Photo.Item item: list) {
+                        if (item.feature.equalsIgnoreCase("popular")) {
+                            newlist.add(item);
+                        }
+                    }
+
+                    generateDataList(newlist);
 
                 }
 
@@ -58,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /*Method to generate List of data using RecyclerView with custom adapter*/
-    private void generateDataList(List<Photo> photoList) {
+    private void generateDataList(List<Photo.Item> photoList) {
         recyclerView = findViewById(R.id.customRecyclerView);
         adapter = new CustomAdapter(this,photoList);
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(MainActivity.this);
