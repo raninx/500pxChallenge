@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements CustomAdapter.OnI
 //              Toast.makeText(getBaseContext(),"success",Toast.LENGTH_LONG).show();
                     progressBar.setVisibility(View.GONE);
 
+                    isLastPage = response.body().total_pages;
                     List<Item> list= response.body().photos;
 
                     loading = false;
