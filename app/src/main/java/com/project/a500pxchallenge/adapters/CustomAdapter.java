@@ -63,4 +63,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
     public int getItemCount() {
         return dataList.size();
     }
+
+    //Pagination
+    public void updateList(List<Photo.Item> list) {
+        this.dataList.addAll(list);
+        this.notifyDataSetChanged();
+    }
 }

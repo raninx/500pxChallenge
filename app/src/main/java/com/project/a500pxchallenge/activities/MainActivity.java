@@ -3,6 +3,7 @@ package com.project.a500pxchallenge.activities;
 import android.app.ProgressDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.widget.Toast;
@@ -10,10 +11,9 @@ import com.project.a500pxchallenge.R;
 import com.project.a500pxchallenge.Util.Util;
 import com.project.a500pxchallenge.adapters.CustomAdapter;
 import com.project.a500pxchallenge.model.Photo;
+import com.project.a500pxchallenge.model.Photo.Item;
 import com.project.a500pxchallenge.network.RetrofitClientInstance;
 import com.project.a500pxchallenge.network.services.GetPhotosService;
-
-import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -24,36 +24,65 @@ public class MainActivity extends AppCompatActivity {
     ProgressDialog progressDoalog;
     RecyclerView recyclerView;
     CustomAdapter adapter;
+    private boolean loading = false;
+    private boolean isScrollCalled;
+    int isLastPage = 10;
+    int pageCount = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        progressDoalog = new ProgressDialog(MainActivity.this);
-        progressDoalog.setMessage("Loading....");
-        progressDoalog.show();
 
-        /*Create handle for the RetrofitInstance interface*/
+        //setting up recyclerview
+        recyclerView = findViewById(R.id.customRecyclerView);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+
+        getDataList(0);
+
+        //Paigination
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                final LinearLayoutManager manager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                int lastvisibleitemposition = manager.findLastVisibleItemPosition();
+
+                if (lastvisibleitemposition == adapter.getItemCount() - 1) {
+
+                    if (!loading && pageCount != isLastPage) {
+                        loading = true;
+                        getDataList(++pageCount);
+                        isScrollCalled = Boolean.TRUE;
+                    }
+
+
+                }
+            }
+        });
+
+    }
+
+
+    private void getDataList(int pageCount) {
         try {
             GetPhotosService service = RetrofitClientInstance.getRetrofitInstance().create(GetPhotosService.class);
-            Call<Photo> call = service.getAllPhotos(Util.getKey("key", getApplicationContext()));
+            Call<Photo> call = service.getAllPhotos(Util.getKey("key", getApplicationContext()),pageCount);
             call.enqueue(new Callback<Photo>() {
                 @Override
                 public void onResponse(Call<Photo> call, Response<Photo> response) {
-                    progressDoalog.dismiss();
 
                     Toast.makeText(getBaseContext(),"success",Toast.LENGTH_LONG).show();
 
-                    ArrayList<Photo.Item> list= response.body().photos;
-                    ArrayList<Photo.Item> newlist= new ArrayList<>();
-                    for (Photo.Item item: list) {
-                        if (item.feature.equalsIgnoreCase("popular")) {
-                            newlist.add(item);
-                        }
+                    List<Item> list= response.body().photos;
+
+                    loading = false;
+                    if (!isScrollCalled) {
+                      generateDataList(list);
+                    } else {
+                        adapter.updateList(list);
                     }
-
-                    generateDataList(newlist);
-
                 }
 
                 @Override
@@ -62,19 +91,19 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Something went wrong...Please try later!", Toast.LENGTH_SHORT).show();
                 }
             });
+
         }catch (Exception e) {
             e.printStackTrace();
         }
-    }
+}
 
     /*Method to generate List of data using RecyclerView with custom adapter*/
     private void generateDataList(List<Photo.Item> photoList) {
-        recyclerView = findViewById(R.id.customRecyclerView);
         adapter = new CustomAdapter(this,photoList);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(MainActivity.this);
-        recyclerView.setLayoutManager(layoutManager);
         recyclerView.setAdapter(adapter);
     }
+
+
 
 }
 
