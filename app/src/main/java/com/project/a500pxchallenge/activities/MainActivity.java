@@ -1,11 +1,14 @@
 package com.project.a500pxchallenge.activities;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import com.project.a500pxchallenge.R;
 import com.project.a500pxchallenge.Util.Util;
@@ -19,9 +22,9 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements CustomAdapter.OnItemClickListener {
 
-    ProgressDialog progressDoalog;
+    ProgressBar progressBar;
     RecyclerView recyclerView;
     CustomAdapter adapter;
     private boolean loading = false;
@@ -34,13 +37,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        progressBar=findViewById(R.id.progressBar);
+
         //setting up recyclerview
         recyclerView = findViewById(R.id.customRecyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         getDataList(0);
 
-        //Paigination
+        //Pagination
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -56,24 +61,22 @@ public class MainActivity extends AppCompatActivity {
                         getDataList(++pageCount);
                         isScrollCalled = Boolean.TRUE;
                     }
-
-
                 }
             }
         });
-
     }
 
-
+    //Get the data from API
     private void getDataList(int pageCount) {
         try {
+            progressBar.setVisibility(View.VISIBLE);
             GetPhotosService service = RetrofitClientInstance.getRetrofitInstance().create(GetPhotosService.class);
-            Call<Photo> call = service.getAllPhotos(Util.getKey("key", getApplicationContext()),pageCount);
+            Call<Photo> call = service.getAllPhotos(Util.getKey("key", getApplicationContext()),"popular",3,pageCount);
             call.enqueue(new Callback<Photo>() {
                 @Override
                 public void onResponse(Call<Photo> call, Response<Photo> response) {
-
-                    Toast.makeText(getBaseContext(),"success",Toast.LENGTH_LONG).show();
+//              Toast.makeText(getBaseContext(),"success",Toast.LENGTH_LONG).show();
+                    progressBar.setVisibility(View.GONE);
 
                     List<Item> list= response.body().photos;
 
@@ -87,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<Photo> call, Throwable t) {
-                    progressDoalog.dismiss();
+                    progressBar.setVisibility(View.GONE);
                     Toast.makeText(MainActivity.this, "Something went wrong...Please try later!", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -95,16 +98,21 @@ public class MainActivity extends AppCompatActivity {
         }catch (Exception e) {
             e.printStackTrace();
         }
-}
+    }
 
     /*Method to generate List of data using RecyclerView with custom adapter*/
     private void generateDataList(List<Photo.Item> photoList) {
-        adapter = new CustomAdapter(this,photoList);
+        adapter = new CustomAdapter(this,photoList,this);
         recyclerView.setAdapter(adapter);
     }
 
 
-
+    @Override
+    public void onItemClick(Item item) {
+        Intent intent = new Intent(MainActivity.this, PreviewActivity.class);
+        intent.putExtra("item",item);
+        startActivity(intent);
+    }
 }
 
 

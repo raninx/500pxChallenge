@@ -9,6 +9,6 @@ import retrofit2.http.Query;
 public interface GetPhotosService {
 
     @GET("v1/photos")
-    Call<Photo> getAllPhotos(@Query("consumer_key") String key, @Query("page") int page);
+    Call<Photo> getAllPhotos(@Query("consumer_key") String key, @Query("feature") String popular, @Query("image_size") int size, @Query("page") int page);
 
 }

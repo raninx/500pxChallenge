@@ -7,11 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.jakewharton.picasso.OkHttp3Downloader;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.project.a500pxchallenge.R;
 import com.project.a500pxchallenge.model.Photo;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -19,10 +18,12 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
 
     private List<Photo.Item> dataList;
     private Context context;
+    OnItemClickListener listener;
 
-    public CustomAdapter(Context context,List<Photo.Item> dataList){
+    public CustomAdapter(Context context,List<Photo.Item> dataList,OnItemClickListener listener){
         this.context = context;
         this.dataList = dataList;
+        this.listener = listener;
     }
 
     class CustomViewHolder extends RecyclerView.ViewHolder {
@@ -49,14 +50,24 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
     }
 
     @Override
-    public void onBindViewHolder(CustomViewHolder holder, int position) {
+    public void onBindViewHolder(CustomViewHolder holder, final int position) {
 
-        Picasso.Builder builder = new Picasso.Builder(context);
-        builder.downloader(new OkHttp3Downloader(context));
-        builder.build().load(dataList.get(position).images.get(0).https_url)
-                .placeholder((R.drawable.ic_launcher_background))
-                .error(R.drawable.ic_launcher_background)
+        RequestOptions options = new RequestOptions()
+                .centerCrop()
+                .placeholder(R.mipmap.ic_launcher_round)
+                .error(R.mipmap.ic_launcher_round);
+
+
+        Glide.with(context)
+                .load(dataList.get(position).images.get(0).https_url)
+                .apply(options)
                 .into(holder.image);
+
+        holder.mView.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                listener.onItemClick(dataList.get(position));
+            }
+        });
     }
 
     @Override
@@ -68,5 +79,9 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomView
     public void updateList(List<Photo.Item> list) {
         this.dataList.addAll(list);
         this.notifyDataSetChanged();
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(Photo.Item item);
     }
 }
